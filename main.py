@@ -204,7 +204,7 @@ class TrackCount:
 
 	def __init__(self):
 		self.vehicle_lane_count = multiprocessing.Manager().list([0,0,0,0])
-		print(self.vehicle_lane_count)
+		# print(self.vehicle_lane_count)
 
 	def __new__(self):
 		if self._instance is None:
