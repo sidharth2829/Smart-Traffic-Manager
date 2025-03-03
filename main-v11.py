@@ -12,7 +12,7 @@ from ultralytics import YOLO
 # All these classes will be counted as 'vehicles'
 list_of_vehicles = ["bicycle", "car", "motorbike", "bus", "truck"]
 FRAMES_BEFORE_CURRENT = 5  # Frames to remember for tracking
-inputWidth, inputHeight = 416, 416  # YOLOv8 default size
+inputWidth, inputHeight = 640, 640  # YOLOv11 default size
 
 # Parse command line arguments
 LABELS, weightsPath, configPath, inputVideoPath, outputVideoPath,\
@@ -21,7 +21,7 @@ LABELS, weightsPath, configPath, inputVideoPath, outputVideoPath,\
 inputVideoPathList = [inputVideoPath]
 outputVideoPathAll = [outputVideoPath]
 
-# Load YOLOv8 model
+# Load YOLOv11 model
 print("[INFO] Loading YOLOv11 model...")
 model = YOLO('yolo11n.pt')
 
