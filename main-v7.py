@@ -13,7 +13,7 @@ from input_retrieval import *
 # from queue import Queue
 import multiprocessing
 
-# from atcs import traffic_control
+from atcs import traffic_control
 
 #All these classes will be counted as 'vehicles'
 list_of_vehicles = ["bicycle","car","motorbike","bus","truck"]
@@ -23,12 +23,7 @@ inputWidth, inputHeight = 416, 416
 
 #Parse command line arguments and extract the values required
 LABELS, weightsPath, configPath, inputVideoPath, outputVideoPath,\
-	preDefinedConfidence, preDefinedThreshold, USE_GPU, _, _ = parseCommandLineArguments()
-
-# Directly use inputVideoPath and outputVideoPath instead of lists
-inputVideoPathList = [inputVideoPath]
-outputVideoPathAll = [outputVideoPath]
-
+	preDefinedConfidence, preDefinedThreshold, USE_GPU, inputVideoPathList, outputVideoPathAll= parseCommandLineArguments()
 
 # Initialize a list of colors to represent each possible class label
 np.random.seed(42)
@@ -204,7 +199,7 @@ class TrackCount:
 
 	def __init__(self):
 		self.vehicle_lane_count = multiprocessing.Manager().list([0,0,0,0])
-		# print(self.vehicle_lane_count)
+		print(self.vehicle_lane_count)
 
 	def __new__(self):
 		if self._instance is None:
@@ -366,13 +361,21 @@ def yolo_detection_counter(vehicle_count_instance,lane,inputVideoPath,outputVide
 
 if __name__ == '__main__':
 	vehicle_count_instance = TrackCount()
-
-	# Process only one video instead of multiple
-	process1 = multiprocessing.Process(target=yolo_detection_counter, args=(vehicle_count_instance, 0, inputVideoPathList[0], outputVideoPathAll[0]))
-	# process2 = multiprocessing.Process(target=traffic_control, args=(vehicle_count_instance,))
-
+	
+	process1 = multiprocessing.Process(target=yolo_detection_counter, args=(vehicle_count_instance,0,inputVideoPathList[0],outputVideoPathAll[0]))
+	process3 = multiprocessing.Process(target=yolo_detection_counter, args=(vehicle_count_instance,1,inputVideoPathList[1],outputVideoPathAll[1]))
+	process4 = multiprocessing.Process(target=yolo_detection_counter, args=(vehicle_count_instance,2,inputVideoPathList[2],outputVideoPathAll[2]))
+	process5 = multiprocessing.Process(target=yolo_detection_counter, args=(vehicle_count_instance,3,inputVideoPathList[3],outputVideoPathAll[3]))
+	process2 = multiprocessing.Process(target=traffic_control, args=(vehicle_count_instance,))
+	
 	process1.start()
-	# process2.start()
+	process3.start()
+	process4.start()
+	process5.start()
+	process2.start()
 
 	process1.join()
-	# process2.join()
+	process3.join()
+	process4.join()
+	process5.join()
+	process2.join()

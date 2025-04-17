@@ -8,18 +8,16 @@ import cv2
 from input_retrieval import *
 import multiprocessing
 from ultralytics import YOLO
-
+from atcs import traffic_control
 # All these classes will be counted as 'vehicles'
 list_of_vehicles = ["bicycle", "car", "motorbike", "bus", "truck"]
 FRAMES_BEFORE_CURRENT = 5  # Frames to remember for tracking
 inputWidth, inputHeight = 640, 640  # YOLOv11 default size
 
-# Parse command line arguments
+#Parse command line arguments and extract the values required
 LABELS, weightsPath, configPath, inputVideoPath, outputVideoPath,\
-    preDefinedConfidence, preDefinedThreshold, USE_GPU, _, _ = parseCommandLineArguments()
+	preDefinedConfidence, preDefinedThreshold, USE_GPU, inputVideoPathList, outputVideoPathAll= parseCommandLineArguments()
 
-inputVideoPathList = [inputVideoPath]
-outputVideoPathAll = [outputVideoPath]
 
 # Load YOLOv11 model
 print("[INFO] Loading YOLOv11 model...")
@@ -89,23 +87,26 @@ def boxInPreviousFrames(previous_frame_detections, current_box, current_detectio
     current_detections[(centerX, centerY)] = previous_frame_detections[frame_num][coord]
     return True
 
-# TrackCount class for multiprocessing
 class TrackCount:
-    _instance = None
+	_instance = None
 
-    def __init__(self):
-        self.vehicle_lane_count = multiprocessing.Manager().list([0, 0, 0, 0])
+	def __init__(self):
+		self.vehicle_lane_count = multiprocessing.Manager().list([0,0,0,0])
+		print(self.vehicle_lane_count)
 
-    def __new__(cls):
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-        return cls._instance
+	def __new__(self):
+		if self._instance is None:
+			self._instance = super().__new__(self)
+		return self._instance
 
-    def update_count(self, lane, value):
-        self.vehicle_lane_count[lane] = value
+	def update_count(self,lane,value):
+		self.vehicle_lane_count[lane] = value
 
-    def get_count(self, lane):
-        return self.vehicle_lane_count[lane]
+	def reset_count(self,lane):
+		self.vehicle_lane_count[lane] = 0
+
+	def get_count(self,lane):
+		return self.vehicle_lane_count[lane]
 
 # Main detection and counting function
 def yolo_detection_counter(vehicle_count_instance, lane, inputVideoPath, outputVideoPath):
@@ -161,10 +162,23 @@ def yolo_detection_counter(vehicle_count_instance, lane, inputVideoPath, outputV
         videoStream.release()
         return
 
-# Main function to start the process
 if __name__ == '__main__':
-    vehicle_count_instance = TrackCount()
+	vehicle_count_instance = TrackCount()
+	
+	process1 = multiprocessing.Process(target=yolo_detection_counter, args=(vehicle_count_instance,0,inputVideoPathList[0],outputVideoPathAll[0]))
+	process3 = multiprocessing.Process(target=yolo_detection_counter, args=(vehicle_count_instance,1,inputVideoPathList[1],outputVideoPathAll[1]))
+	process4 = multiprocessing.Process(target=yolo_detection_counter, args=(vehicle_count_instance,2,inputVideoPathList[2],outputVideoPathAll[2]))
+	process5 = multiprocessing.Process(target=yolo_detection_counter, args=(vehicle_count_instance,3,inputVideoPathList[3],outputVideoPathAll[3]))
+	process2 = multiprocessing.Process(target=traffic_control, args=(vehicle_count_instance,))
+	
+	process1.start()
+	process3.start()
+	process4.start()
+	process5.start()
+	process2.start()
 
-    process1 = multiprocessing.Process(target=yolo_detection_counter, args=(vehicle_count_instance, 0, inputVideoPathList[0], outputVideoPathAll[0]))
-    process1.start()
-    process1.join()
+	process1.join()
+	process3.join()
+	process4.join()
+	process5.join()
+	process2.join()
